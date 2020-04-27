@@ -52,12 +52,12 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser(process.env.COOKIE_SECRET));
 
 
-//middleware that checks if JWT token exists and verifies it if it does exist.
-//In all future routes, this helps to know if the request is authenticated or not.
-app.use(function (req, res, next) {
+// middleware that checks if JWT token exists and verifies it if it does exist.
+// In all private routes, this helps to know if the request is authenticated or not.
+const authMiddleware = function (req, res, next) {
   // check header or url parameters or post parameters for token
   var token = req.headers['authorization'];
-  if (!token) return next(); //if no token, continue
+  if (!token) return handleResponse(req, res, 401);
 
   token = token.replace('Bearer ', '');
 
@@ -83,7 +83,7 @@ app.use(function (req, res, next) {
       next();
     }
   });
-});
+}
 
 
 // validate user credentials
@@ -183,10 +183,7 @@ app.post('/verifyToken', function (req, res) {
 
 
 // get list of the users
-app.get('/users/getList', (req, res) => {
-  if (!req.user)
-    return handleResponse(req, res, 401);
-
+app.get('/users/getList', authMiddleware, (req, res) => {
   const list = userList.map(x => {
     const user = { ...x };
     delete user.password;
